@@ -53,14 +53,36 @@ const fakeServerData = {
 class App extends Component {
   constructor(){
     super()
-    this.state = {serverData: {}}
+    this.state = {
+      serverData: {},
+      filterString: ''
+    }
   }
 
     componentDidMount() {
       setTimeout(() => {
         this.setState({serverData: fakeServerData})
         }, 2000);
+      // Simulate input after 3 seconds from app start
+      // setTimeout(()=> {
+      //   this.setState({filterString: 'mOM'})
+      // }, 3000)
     }
+
+  renderHeader = () => 
+    this.state.serverData.user ?
+      <h1 style={defaultStyleObject}>
+        {this.state.serverData.user.name}'s Playlist
+      </h1> : <h1 style={defaultStyleObject}>Loading...</h1>
+
+  renderPlaylists = () =>
+    this.state.serverData.playlists ? 
+    this.state.serverData.playlists
+      .filter(playlist => 
+
+        playlist.name.toUpperCase().includes(this.state.filterString.toUpperCase()))
+      .map(playlist => <Playlist playlist={playlist}/>) :
+    <p style={defaultStyleObject}>Fetching playlists...</p>
 
   render() {
     return (
@@ -68,22 +90,13 @@ class App extends Component {
           {
             this.state.serverData ?
             <div>
-              {
-              this.state.serverData.user ?
-              <h1 style={defaultStyleObject}>
-                {this.state.serverData.user.name}'s Playlist
-              </h1> : <h1 style={defaultStyleObject}>Loading...</h1>
-              }
-            <PlaylistCounter playlists = {this.state.serverData.playlists}/>
-            <PlaylistHourCounter playlists = {this.state.serverData.playlists}/>
-            <Filter/>
-            {this.state.serverData.playlists ? 
-              this.state.serverData.playlists.map(playlist => 
-              <Playlist playlist={playlist}/>)
-              : <p style={defaultStyleObject}>Fetching playlists...</p>
-            }
-          </div> : <h1 style={defaultStyleObject}>Loading...</h1>
-        }
+              { this.renderHeader() }
+              <PlaylistCounter playlists = {this.state.serverData.playlists}/>
+              <PlaylistHourCounter playlists = {this.state.serverData.playlists}/>
+              <Filter onTextChange = {text => this.setState({filterString: text})}/>
+              { this.renderPlaylists() }
+            </div> : <h1 style={defaultStyleObject}>Loading...</h1>
+          }
       </div>
     );
   }
@@ -130,7 +143,8 @@ class Filter extends Component {
     return (
       <div>
         <img/>
-        <input type="text"/>
+        <input type="text" onKeyUp={event => 
+          this.props.onTextChange(event.target.value)}/>
       </div>
     )
   }
@@ -145,7 +159,7 @@ class Playlist extends Component{
           <img/>
           <h3>{this.props.playlist.name ? this.props.playlist.name : "Loading name..."}</h3>
           <ul>
-            { this.renderPlaylists()}
+            { this.renderPlaylists() }
           </ul>
         </div> :
         <p>"Loading..."</p>}
@@ -157,14 +171,11 @@ class Playlist extends Component{
     this.props.playlist.songs ?
     this.props.playlist.songs.map(song => this.renderSong(song)):
       "Loading songs..."
-    
 
   renderSong = (song) => 
     song.name ? 
     <li><Song song={song}/></li> : 
     <li><p>...</p></li>
-  
-
 }
 
 class Song extends Component{
@@ -172,11 +183,7 @@ class Song extends Component{
     return(
       <div>
         <p>
-          {
-            this.props.song ?
-            this.props.song.name :
-            "..."
-          }
+          { this.props.song ? this.props.song.name : "..." }
         </p>
       </div>
     )
