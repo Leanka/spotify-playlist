@@ -3,9 +3,8 @@ import logo from './logo.svg';
 import './App.css';
 import { delay } from 'q';
 
-const defaultTextColor = "#fff";
 const defaultStyleObject = {
-  color: defaultTextColor
+  color: "#fff"
 }
 const fakeServerData = {
   user: {
@@ -31,7 +30,7 @@ const fakeServerData = {
       ]
     },
     {
-      name: "Does mom know you smoke",
+      name: "Does mom know you smoke?",
       songs: [
         {name: "song nr 21", duration: 100}, 
         {name: "song nr 22", duration: 91}, 
@@ -60,7 +59,7 @@ class App extends Component {
     componentDidMount() {
       setTimeout(() => {
         this.setState({serverData: fakeServerData})
-        }, 1000);
+        }, 2000);
     }
 
   render() {
@@ -78,10 +77,11 @@ class App extends Component {
             <PlaylistCounter playlists = {this.state.serverData.playlists}/>
             <PlaylistHourCounter playlists = {this.state.serverData.playlists}/>
             <Filter/>
-            <Playlist/>
-            <Playlist/>
-            <Playlist/>
-            <Playlist/>
+            {this.state.serverData.playlists ? 
+              this.state.serverData.playlists.map(playlist => 
+              <Playlist playlist={playlist}/>)
+              : <p style={defaultStyleObject}>Fetching playlists...</p>
+            }
           </div> : <h1 style={defaultStyleObject}>Loading...</h1>
         }
       </div>
@@ -103,19 +103,22 @@ class PlaylistCounter extends Component {
 }
 
 class PlaylistHourCounter extends Component {
-  render() {
+
+  calculateLength = () =>
+    this.props.playlists && 
+      this.props.playlists.reduce(
+        (playlistsDuration, eachPlaylist) => {
+          return playlistsDuration += eachPlaylist.songs.reduce((onePlaylistDuration, eachSong) => {
+            return onePlaylistDuration += eachSong.duration;
+          }, 0)
+        }, 0) /60
+  
+  render() {      
     return (
       <div style={{...defaultStyleObject, width: "40%", display: "inline-block"}}>
         <h2>
-          {
-          this.props.playlists && 
-          this.props.playlists.reduce(
-            (playlistsDuration, eachPlaylist) => {
-              return playlistsDuration += eachPlaylist.songs.reduce((onePlaylistDuration, eachSong) => {
-                return onePlaylistDuration += eachSong.duration;
-              }, 0)
-            }, 0)
-            /60} minutes
+          {/* {Math.floor(this.calculateLength())} minutes - first it's NaN bause of undefined, next it's rendered */}
+          {this.calculateLength() ? this.calculateLength().toFixed(2) : "Calculating"} minutes
         </h2>
       </div>
     );
@@ -137,23 +140,44 @@ class Playlist extends Component{
   render(){
     return(
       <div style={{...defaultStyleObject, width: "25%", display: "inline-block"}}>
-        <img/>
-        <h3>Playlist name</h3>
-        <ul>
-          <li><Song/></li>
-          <li><Song/></li>
-          <li><Song/></li>
-        </ul>
+      {this.props.playlist ?
+        <div>
+          <img/>
+          <h3>{this.props.playlist.name ? this.props.playlist.name : "Loading name..."}</h3>
+          <ul>
+            { this.renderPlaylists()}
+          </ul>
+        </div> :
+        <p>"Loading..."</p>}
       </div>
     )
   }
+
+  renderPlaylists = () => 
+    this.props.playlist.songs ?
+    this.props.playlist.songs.map(song => this.renderSong(song)):
+      "Loading songs..."
+    
+
+  renderSong = (song) => 
+    song.name ? 
+    <li><Song song={song}/></li> : 
+    <li><p>...</p></li>
+  
+
 }
 
 class Song extends Component{
   render(){
     return(
       <div>
-        <p>Song name</p>
+        <p>
+          {
+            this.props.song ?
+            this.props.song.name :
+            "..."
+          }
+        </p>
       </div>
     )
   }
